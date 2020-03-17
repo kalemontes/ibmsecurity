@@ -3,6 +3,11 @@ import ibmsecurity.utilities.tools
 
 logger = logging.getLogger(__name__)
 
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
+
 
 def get(isamAppliance, check_mode=False, force=False):
     """
@@ -40,6 +45,26 @@ def set(isamAppliance, primaryServer=None, secondaryServer=None, tertiaryServer=
                 })
 
     return isamAppliance.create_return_object()
+
+
+def test(isamAppliance, host, server=None, force=False, check_mode=False):
+    """
+    Run DNS Lookup Test
+    """
+    if check_mode is True:
+        return isamAppliance.create_return_object(changed=True)
+
+    ret_obj = isamAppliance.invoke_post("Run DNS Lookup Test",
+                                        "/isam/net/lookup",
+                                        {
+                                            'host': host,
+                                            'server': server
+                                        })
+    # HTTP POST calls get flagged as changes - but DNS lookup changes nothing so override
+    if ret_obj['changed'] is True:
+        ret_obj['changed'] = False
+
+    return ret_obj
 
 
 def _check(isamAppliance, primaryServer, secondaryServer, tertiaryServer, searchDomains, auto=False,
